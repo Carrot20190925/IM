@@ -1,0 +1,565 @@
+/**
+ * Copyright (C) 2014-2016 Open Whisper Systems
+ *
+ * Licensed according to the LICENSE file in this repository.
+ */
+
+// iOS - since we use a modern proto-compiler, we must specify
+// the legacy proto format.
+syntax = "proto2";
+
+// iOS - package name determines class prefix
+package SignalServiceProtos;
+
+option java_package = "org.whispersystems.signalservice.internal.push";
+option java_outer_classname = "SignalServiceProtos";
+
+message Envelope {
+  enum Type {
+    UNKNOWN             = 0;
+    PIGRAM_TEXT         = 1;
+    RECEIPT             = 2;
+    TYPING              = 3;
+    REVOKE              = 4;
+  }
+
+  optional Type   type              = 1;
+  optional string source            = 2; //sender id
+  optional string sourceName        = 3; //sender name
+  optional string sourceAvatar      = 4; //sender avatar
+  optional uint32 sourceDevice      = 5; //sender device
+  optional string groupSource       = 6; //for group message.
+  optional string groupSourceName   = 7; //for group message.
+  optional string groupSourceAvatar = 8; //for group message.
+  optional uint64 timestamp         = 9;
+  optional bytes  content           = 10; // message content
+  optional string serverGuid        = 11;
+  optional uint64 serverTimestamp   = 12;
+  optional uint64 sourceRoleInGroup = 13; //role in group, 0 : owner, 1 : manager, 2 : normal member
+}
+
+message TypingMessage {
+  enum Action {
+    STARTED = 0;
+    STOPPED = 1;
+  }
+
+  // @required
+  optional uint64 timestamp = 1;
+  optional Action action = 2;
+  optional string  groupId = 3;
+}
+
+message Content {
+  optional DataMessage    dataMessage    = 1;
+  optional SyncMessage    syncMessage    = 2;
+  optional CallMessage    callMessage    = 3;
+  optional NullMessage    nullMessage    = 4;
+  optional ReceiptMessage receiptMessage = 5;
+  optional TypingMessage  typingMessage  = 6;
+  optional FriendOperation   friendOperation   = 7;//will only appear push message from server
+  optional GroupOperation    groupOperation    = 8;//will only appear push message from server
+  repeated RevokeMessage     revokeMessage     = 9;
+  optional RevokeUserMessage revokeUserMessage = 10;//delete all
+}
+message UserEntity {
+  optional string userId       = 1;
+  optional string userName     = 2;
+  optional string userAvatar   = 3;
+}
+message CallMessage {
+  message Offer {
+    // @required
+    optional uint64 id          = 1;
+    // Signal-iOS renamed the description field to avoid
+    // conflicts with [NSObject description].
+    // @required
+    optional string sessionDescription = 2;
+  }
+
+  message Answer {
+    // @required
+    optional uint64 id          = 1;
+    // Signal-iOS renamed the description field to avoid
+    // conflicts with [NSObject description].
+    // @required
+    optional string sessionDescription = 2;
+  }
+
+  message IceUpdate {
+    // @required
+    optional uint64 id            = 1;
+    // @required
+    optional string sdpMid        = 2;
+    // @required
+    optional uint32 sdpMLineIndex = 3;
+    // @required
+    optional string sdp           = 4;
+  }
+
+  message Busy {
+    // @required
+    optional uint64 id = 1;
+  }
+
+  message Hangup {
+    // @required
+    optional uint64 id = 1;
+  }
+
+  optional Offer     offer     = 1;
+  optional Answer    answer    = 2;
+  repeated IceUpdate iceUpdate = 3;
+  optional Hangup    hangup    = 4;
+  optional Busy      busy      = 5;
+  // Signal-iOS sends profile key with call messages
+  // for earlier discovery
+  optional bytes     profileKey = 6;
+}
+
+
+
+message DataMessage {
+  enum Flags {
+    EXPIRATION_TIMER_UPDATE = 1;
+  }
+
+  message Quote {
+    message QuotedAttachment {
+      enum Flags {
+        VOICE_MESSAGE = 1;
+      }
+
+      optional string            contentType = 1;
+      optional string            fileName    = 2;
+      optional AttachmentPointer thumbnail   = 3;
+      optional uint32            flags       = 4;
+    }
+
+    // @required
+    optional uint64            id          = 1;
+    optional string            author      = 2;
+    optional string            text        = 3;
+    repeated QuotedAttachment  attachments = 4;
+    optional string            authorUuid  = 5;
+
+  }
+
+  message Contact {
+    message Name {
+      optional string givenName   = 1;
+      optional string familyName  = 2;
+      optional string prefix      = 3;
+      optional string suffix      = 4;
+      optional string middleName  = 5;
+      optional string displayName = 6;
+    }
+
+    message Phone {
+      enum Type {
+        HOME   = 1;
+        MOBILE = 2;
+        WORK   = 3;
+        CUSTOM = 4;
+      }
+
+      optional string value = 1;
+      optional Type   type  = 2;
+      optional string label = 3;
+    }
+
+    message Email {
+      enum Type {
+        HOME   = 1;
+        MOBILE = 2;
+        WORK   = 3;
+        CUSTOM = 4;
+      }
+
+      optional string value = 1;
+      optional Type   type  = 2;
+      optional string label = 3;
+    }
+
+    message PostalAddress {
+      enum Type {
+        HOME   = 1;
+        WORK   = 2;
+        CUSTOM = 3;
+      }
+
+      optional Type   type         = 1;
+      optional string label        = 2;
+      optional string street       = 3;
+      optional string pobox        = 4;
+      optional string neighborhood = 5;
+      optional string city         = 6;
+      optional string region       = 7;
+      optional string postcode     = 8;
+      optional string country      = 9;
+    }
+
+    message Avatar {
+      optional AttachmentPointer avatar    = 1;
+      optional bool              isProfile = 2;
+    }
+
+    optional Name              name            = 1;
+    repeated Phone             number          = 3;
+    repeated Email             email           = 4;
+    repeated PostalAddress     address         = 5;
+    optional Avatar            avatar          = 6;
+    optional string            organization    = 7;
+  }
+
+  message Preview {
+    // @required
+    optional string            url   = 1;
+    optional string            title = 2;
+    optional AttachmentPointer image = 3;
+  }
+
+  message Sticker {
+    // @required
+    optional bytes packId = 1;
+    // @required
+    optional bytes packKey = 2;
+    // @required
+    optional uint32 stickerId = 3;
+    // @required
+    optional AttachmentPointer data = 4;
+  }
+  message ShareMessage {
+    optional string sharedId      = 1;
+    optional string sharedName    = 2;
+    optional string sharedAvatar  = 3;
+  }
+  enum ProtocolVersion {
+    option allow_alias = true;
+
+    INITIAL = 0;
+    CURRENT = 0;
+  }
+
+    optional uint32             flags                   = 1;
+  //  optional MessageType        type                    = 2;
+    optional string             body                    = 3;
+    repeated AttachmentPointer  attachments             = 4;
+    optional uint32             expireTimer             = 5;
+    optional uint64             timestamp               = 6;
+    optional Quote              quote                   = 7;
+    optional ShareMessage       shareMessage            = 8;
+    repeated Preview            preview                 = 9;
+    optional Sticker            sticker                 = 10;
+    optional uint32             requiredProtocolVersion = 11;
+    optional bool               isViewOnce              = 12;
+    repeated UserEntity         mentioned               = 13;
+}
+
+message NullMessage {
+  optional bytes padding = 1;
+}
+
+message ReceiptMessage {
+  enum Type {
+    DELIVERY = 0;
+    READ     = 1;
+    FAILED_BY_NOT_FRIENDS   = 2;
+    FAILED_BY_NO_PERMISSION = 3;
+  }
+
+  optional Type   type      = 1;
+  repeated uint64 timestamp = 2;
+}
+
+
+message RevokeMessage {
+    optional string targetUserId = 1;
+    optional uint64 targetTimestamp = 2;
+}
+
+message RevokeUserMessage {
+    optional string targetUserId = 1;
+    optional string targetGroupId = 2;
+}
+
+message Verified {
+  enum State {
+    DEFAULT    = 0;
+    VERIFIED   = 1;
+    UNVERIFIED = 2;
+  }
+
+  optional string destination = 1;
+  optional bytes  identityKey = 2;
+  optional State  state       = 3;
+  optional bytes  nullMessage = 4;
+}
+
+message SyncMessage {
+  message Sent {
+    optional string            destination              = 1;
+    optional uint64            timestamp                = 2;
+    optional DataMessage       message                  = 3;
+    optional uint64            expirationStartTimestamp = 4;
+    optional bool              isRecipientUpdate        = 5 [default = false];
+    repeated RevokeMessage     revokeMessage            = 6;
+    optional RevokeUserMessage revokeUserMessage        = 7;
+  }
+
+  message Contacts {
+    // @required
+    optional AttachmentPointer blob       = 1;
+    // Signal-iOS renamed this property.
+    optional bool              isComplete = 2 [default = false];
+  }
+
+  message Groups {
+    optional AttachmentPointer blob = 1;
+  }
+  message Bunches {
+    optional bool update = 1;
+  }
+
+  message Blocked {
+    repeated string numbers = 1;
+    repeated string groupIds = 2;
+  }
+
+  message Request {
+    enum Type {
+      UNKNOWN       = 0;
+      CONTACTS      = 1;
+      GROUPS        = 2;
+      BLOCKED       = 3;
+      CONFIGURATION = 4;
+    }
+
+    optional Type type = 1;
+  }
+
+  message Read {
+    optional string sender    = 1;
+    optional uint64 timestamp = 2;
+  }
+
+  message Configuration {
+    optional bool readReceipts      = 1;
+    optional bool typingIndicators  = 2;
+    optional bool linkPreviews      = 3;
+    optional bool stick             = 4;//whether need to sync stick status
+  }
+
+  message StickerPackOperation {
+    enum Type {
+      INSTALL = 0;
+      REMOVE  = 1;
+    }
+    // @required
+    optional bytes packId = 1;
+    // @required
+    optional bytes packKey = 2;
+    optional Type  type    = 3;
+  }
+
+  message ViewOnceOpen {
+      optional string sender    = 1;
+      optional uint64 timestamp = 2;
+  }
+
+  optional Sent                 sent                 = 1;
+  optional Contacts             contacts             = 2;
+  optional Groups               groups               = 3;
+  optional Request              request              = 4;
+  repeated Read                 read                 = 5;
+  optional Blocked              blocked              = 6;
+  optional Configuration        configuration        = 7;
+  optional bytes                padding              = 8;
+  repeated StickerPackOperation stickerPackOperation = 9;
+  optional ViewOnceOpen         viewOnceOpen         = 10;
+  optional Bunches              bunches              = 11;
+}
+
+message AttachmentPointer {
+  enum Flags {
+    VOICE_MESSAGE = 1;
+  }
+
+  // @required
+  optional string  id          = 1; //AttachmentUploadAttributes#attachmentIdString
+  optional string  contentType = 2; //
+  optional uint32  size        = 3; //
+  optional bytes   thumbnail   = 4; // preview of picture
+  optional string  fileName    = 5; //
+  optional uint32  flags       = 6; // VOICE_MESSAGE_VALUE or 0
+  optional uint32  width       = 7; // width of preview(need test to confirm)
+  optional uint32  height      = 8; //
+  optional string  caption     = 9; // could be null
+}
+
+message GroupOperation {
+  enum Type {
+    UNKNOWN        = 0;
+    DRAG           = 1; // be directly drag into a group.
+    INVITE         = 2; // just prompt to notify user, and user still have choice to receipt or not
+    APPLY          = 3; // only owner and managers can receive this. 'userId' 'userName' 'userAvatar'
+    DECLINE        = 4; // only the applicant can receive this
+    BLOCK          = 5; // only the blocked person can receive this
+    UPDATE         = 6; // all members can receive this, including self. combine with 'Target' below
+    ADD            = 7; // all members can receive this, including self. combine with 'Target' below
+    REMOVE         = 8; // all members can receive this, including self. combine with 'Target' below
+    APPLY_ACCEPTED = 9; // one of previous APPLY message was accepted. owner and managers can receive this
+    APPLY_DECLINED = 10; // one of previous APPLY message was handled. owner and managers can receive this
+    QUIT           = 11; // one of previous APPLY message was handled. owner and managers can receive this
+    DISMISS        = 12; // one of previous APPLY message was handled. owner and managers can receive this
+  }
+  enum Target {
+    NONE          = 0;
+    NAME          = 1; //for UPDATE
+    AVATAR        = 2; //for UPDATE
+    OWNER         = 3; //for UPDATE
+    MANAGER       = 4; //for UPDATE
+    MEMBER        = 5; //for ADD/REMOVE
+    NOTICE        = 6; //for UPDATE/ADD/REMOVE
+    PERM_GROUP    = 7; //perm right of different roles has been changed.
+    PERM_PERSONAL = 8; //only the affected person can receive this
+    LINK          = 9; //all members can receive this message when
+  }
+  message Notice {
+    optional string id              = 1;
+    optional UserEntity sender      = 2;
+    optional string content         = 3;
+    optional uint64 serverTimestamp = 4;
+  }
+
+  message Perm {
+    optional uint32 role          = 1; //0 owner; 1 manager; 2 member
+    optional uint32 rightBan      = 2;
+  }
+
+  message GroupMember{
+      optional string userId       = 1;
+      optional string userName     = 2;
+      optional string userAvatar   = 3;
+      optional uint32 roleInGroup  = 4;
+      optional uint32 rightInGroup = 5;
+      optional uint32 memberStatus = 6;
+  }
+
+  optional string            id           = 1;
+  optional Type              type         = 2;
+  optional Target            target       = 3;
+  optional uint32            memberCount  = 4; //total member count, including self and owner
+  optional string            name         = 5; //for UPDATE.NAME
+  optional string            avatar       = 6; //for UPDATE.AVATAR
+  optional Notice            notices      = 7; //for UPDATE.NOTICES
+  repeated GroupMember       groupMember  = 8; //for example: ADD.MEMBER,the user means who was invited into group.
+  repeated Perm              perm         = 9; //only be used when receive UPDATE.PERM_GROUP. and the perm will be repeated 3 times for owner manager and members
+  optional uint32            rightBan     = 10;//only be used when receive UPDATE.PERM_PERSONAL.
+  optional uint64            setupTime    = 11;//when does the group setup
+  optional string            linkValue    = 12;//for UPDATE.LINK
+}
+
+message FriendOperation{
+    enum Action {
+        APPLY   = 0;
+        ACCEPT  = 1;
+        DECLINE = 2;
+        //        DELETE  = 3;
+        //        BLOCK   = 4;
+    }
+    enum Channel {
+        NUMBER   = 0;
+        SCAN     = 1;
+        GROUP    = 2;
+        USER_ID  = 3;
+        CARD     = 4;
+        LINK     = 5;
+    }
+
+    optional Action     action       = 1;
+    optional Channel    channel      = 2;
+    optional UserEntity user         = 3; // the real user, for example: who apply to make friends with me.
+    optional string     extraMessage = 4; // applying message and so on.
+}
+
+message GroupContext {
+  message Member {
+    optional string uuid = 1;
+    optional string e164 = 2;
+  }
+
+  enum Type {
+    UNKNOWN      = 0;
+    UPDATE       = 1;
+    DELIVER      = 2;
+    QUIT         = 3;
+    REQUEST_INFO = 4;
+  }
+  // @required
+  optional bytes             id          = 1;
+  optional Type              type        = 2;
+  optional string            name        = 3;
+  // A list of known phone numbers in the group, only maintained 
+  // to support legacy apps that don't know about UUIDs. We may want 
+  // to eventually stop populating this.
+  repeated string            membersE164 = 4;
+  optional AttachmentPointer avatar      = 5;
+  repeated Member            members     = 6;
+}
+
+message ContactDetails {
+  message Avatar {
+    optional string contentType = 1;
+    optional uint32 length      = 2;
+  }
+
+  optional string   number      = 1;
+  optional string   uuid        = 9;
+  optional string   name        = 2;
+  optional Avatar   avatar      = 3;
+  optional string   color       = 4;
+  optional Verified verified    = 5;
+  optional bytes    profileKey  = 6;
+  optional bool     blocked     = 7;
+  optional uint32   expireTimer = 8;
+}
+
+message GroupDetails {
+  message Avatar {
+    optional string contentType = 1;
+    optional uint32 length      = 2;
+  }
+
+  message Member {
+    optional string uuid = 1;
+    optional string e164 = 2;
+  }
+
+  // @required
+  optional bytes  id          = 1;
+  optional string name        = 2;
+  // A list of known phone numbers in the group, only maintained 
+  // to support legacy apps that don't know about UUIDs. We may want 
+  // to eventually stop populating this.
+  repeated string membersE164 = 3;
+  optional Avatar avatar      = 4;
+  optional bool   active      = 5 [default = true];
+  optional uint32 expireTimer = 6;
+  optional string color       = 7;
+  optional bool   blocked     = 8;
+  repeated Member members     = 9;
+}
+
+message Pack {
+  message Sticker {
+    // @required
+    optional uint32 id    = 1;
+    optional string emoji = 2;
+  }
+
+  optional string  title    = 1;
+  optional string  author   = 2;
+  optional Sticker cover    = 3;
+  repeated Sticker stickers = 4;
+}

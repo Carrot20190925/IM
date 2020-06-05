@@ -1,0 +1,11 @@
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/DigiCertGlobalRootG2.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/DigiCertSHA2HighAssuranceServerCA.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GIAG2.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GSR2.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GSR4.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GTSR1.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GTSR2.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GTSR3.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/GTSR4.crt
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/ias-root.cer
+/Users/hansen/Desktop/working/Pigram/pigram-ios/Pods/../SignalServiceKit/Resources/Certificates/SFSRootCAG2.crt

@@ -1,0 +1,50 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :test do
+    run_tests(
+      workspace: "Signal.xcworkspace", 
+      scheme: "Signal", 
+      devices: ["iPhone SE"]
+    )
+  end
+end
+
+default_platform(:ios)
+
+platform :ios do
+  desc "pigram app"
+  lane :adhocR do
+    increment_build_number_in_plist(target: 'Pigram')
+    xcode_select "/Applications/Xcode.app"
+    gym(
+        silent: true,
+        clean: true,
+        workspace: "Signal.xcworkspace",
+        scheme: "Signal",
+        include_bitcode: false, 
+        include_symbols: false,
+        export_method: "ad-hoc",
+        output_directory: "./fastlane/build/adhocR",
+        output_name: "Pigram2.0")
+    firim(
+        firim_api_token: "")
+  end
+
+end

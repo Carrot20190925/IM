@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_5" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15509"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Llm-lL-Icb"/>
+                        <viewControllerLayoutGuide type="bottom" id="xb3-aO-Qok"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="pg_laugh_image" translatesAutoresizingMaskIntoConstraints="NO" id="Iy0-f4-bXV">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                                <color key="backgroundColor" systemColor="systemPinkColor" red="1" green="0.1764705882" blue="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="pigram-logo" translatesAutoresizingMaskIntoConstraints="NO" id="cJQ-bT-OGk">
+                                <rect key="frame" x="125.66666666666669" y="333.66666666666669" width="163" height="129"/>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="cJQ-bT-OGk" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-50" id="QFK-al-qNh"/>
+                            <constraint firstItem="cJQ-bT-OGk" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="QIM-LZ-cg5"/>
+                            <constraint firstAttribute="bottom" secondItem="Iy0-f4-bXV" secondAttribute="bottom" id="Y6U-u5-sIo"/>
+                            <constraint firstItem="Iy0-f4-bXV" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="hcT-jl-Man"/>
+                            <constraint firstAttribute="trailing" secondItem="Iy0-f4-bXV" secondAttribute="trailing" id="nRl-FJ-n7F"/>
+                            <constraint firstItem="Iy0-f4-bXV" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="vAH-aH-abF"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="52" y="374.66266866566718"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="pg_laugh_image" width="250" height="444.66665649414062"/>
+        <image name="pigram-logo" width="163" height="129.66667175292969"/>
+    </resources>
+</document>

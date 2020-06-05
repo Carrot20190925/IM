@@ -1,0 +1,247 @@
+//
+//  Copyright (c) 2019 Open Whisper Systems. All rights reserved.
+//
+
+#import "SignalApp.h"
+#import "AppDelegate.h"
+#import "ConversationViewController.h"
+#import "HomeViewController.h"
+#import "Signal-Swift.h"
+#import "SignalsNavigationController.h"
+#import <SignalCoreKit/Threading.h>
+#import <SignalMessaging/DebugLogger.h>
+#import <SignalMessaging/Environment.h>
+#import <SignalServiceKit/SignalServiceKit-Swift.h>
+#import <SignalServiceKit/TSContactThread.h>
+#import <SignalServiceKit/TSGroupThread.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@implementation SignalApp
+
++ (instancetype)sharedApp
+{
+    static SignalApp *sharedApp = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedApp = [[self alloc] initDefault];
+    });
+    return sharedApp;
+}
+
+- (instancetype)initDefault
+{
+    self = [super init];
+
+    if (!self) {
+        return self;
+    }
+
+    OWSSingletonAssert();
+
+    return self;
+}
+
+#pragma mark - Dependencies
+
+- (SDSDatabaseStorage *)databaseStorage
+{
+    return SDSDatabaseStorage.shared;
+}
+
++ (SDSDatabaseStorage *)databaseStorage
+{
+    return SDSDatabaseStorage.shared;
+}
+
+#pragma mark -
+
+- (void)setup {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didChangeCallLoggingPreference:)
+                                                 name:OWSPreferencesCallLoggingDidChangeNotification
+                                               object:nil];
+}
+
+#pragma mark - View Convenience Methods
+
+- (void)presentConversationForAddress:(SignalServiceAddress *)address animated:(BOOL)isAnimated
+{
+    [self presentConversationForAddress:address action:ConversationViewActionNone animated:(BOOL)isAnimated];
+}
+
+- (void)presentConversationForAddress:(SignalServiceAddress *)address
+                               action:(ConversationViewAction)action
+                             animated:(BOOL)isAnimated
+{
+    __block TSThread *thread = nil;
+    [self.databaseStorage writeWithBlock:^(SDSAnyWriteTransaction *transaction) {
+        thread = [TSContactThread getOrCreateThreadWithContactAddress:address transaction:transaction];
+    }];
+    [self presentConversationForThread:thread action:action animated:(BOOL)isAnimated];
+}
+
+- (void)presentConversationForThreadId:(NSString *)threadId animated:(BOOL)isAnimated
+{
+    OWSAssertDebug(threadId.length > 0);
+
+    __block TSThread *_Nullable thread;
+    [self.databaseStorage readWithBlock:^(SDSAnyReadTransaction *transaction) {
+        thread = [TSThread anyFetchWithUniqueId:threadId transaction:transaction];
+    }];
+    if (thread == nil) {
+        OWSFailDebug(@"unable to find thread with id: %@", threadId);
+        return;
+    }
+
+    [self presentConversationForThread:thread animated:isAnimated];
+}
+
+- (void)presentConversationForThread:(TSThread *)thread animated:(BOOL)isAnimated
+{
+    [self presentConversationForThread:thread action:ConversationViewActionNone animated:isAnimated];
+}
+
+- (void)presentConversationForThread:(TSThread *)thread action:(ConversationViewAction)action animated:(BOOL)isAnimated
+{
+    [self presentConversationForThread:thread action:action focusMessageId:nil animated:isAnimated];
+}
+
+- (void)presentConversationForThread:(TSThread *)thread
+                              action:(ConversationViewAction)action
+                      focusMessageId:(nullable NSString *)focusMessageId
+                            animated:(BOOL)isAnimated
+{
+    OWSAssertIsOnMainThread();
+
+    OWSLogInfo(@"");
+
+    if (!thread) {
+        OWSFailDebug(@"Can't present nil thread.");
+        return;
+    }
+
+    DispatchMainThreadSafe(^{
+        UIViewController *frontmostVC = [[UIApplication sharedApplication] frontmostViewController];
+        
+        if ([frontmostVC isKindOfClass:[ConversationViewController class]]) {
+            ConversationViewController *conversationVC = (ConversationViewController *)frontmostVC;
+            if ([conversationVC.thread.uniqueId isEqualToString:thread.uniqueId]) {
+                [conversationVC popKeyBoard];
+                return;
+            }
+        }
+        
+        [self.homeViewController presentThread:thread action:action focusMessageId:focusMessageId animated:isAnimated];
+    });
+}
+
+- (void)presentConversationAndScrollToFirstUnreadMessageForThreadId:(NSString *)threadId animated:(BOOL)isAnimated
+{
+    OWSAssertIsOnMainThread();
+    OWSAssertDebug(threadId.length > 0);
+
+    OWSLogInfo(@"");
+
+    __block TSThread *_Nullable thread;
+    [self.databaseStorage readWithBlock:^(SDSAnyReadTransaction *transaction) {
+        thread = [TSThread anyFetchWithUniqueId:threadId transaction:transaction];
+    }];
+    if (thread == nil) {
+        OWSFailDebug(@"unable to find thread with id: %@", threadId);
+        return;
+    }
+
+    DispatchMainThreadSafe(^{
+        UIViewController *frontmostVC = [[UIApplication sharedApplication] frontmostViewController];
+
+        if ([frontmostVC isKindOfClass:[ConversationViewController class]]) {
+            ConversationViewController *conversationVC = (ConversationViewController *)frontmostVC;
+            if ([conversationVC.thread.uniqueId isEqualToString:thread.uniqueId]) {
+                [conversationVC scrollToFirstUnreadMessage:isAnimated];
+                return;
+            }
+        }
+
+        [self.homeViewController presentThread:thread
+                                        action:ConversationViewActionNone
+                                focusMessageId:nil
+                                      animated:isAnimated];
+    });
+}
+
+- (void)didChangeCallLoggingPreference:(NSNotification *)notification
+{
+    [AppEnvironment.shared.callService createCallUIAdapter];
+}
+
+#pragma mark - Methods
+
++ (void)resetAppData
+{
+    // This _should_ be wiped out below.
+    OWSLogInfo(@"");
+    [DDLog flushLog];
+
+    [self.databaseStorage resetAllStorage];
+    [CurrentAppContext() deleteLocalUserIdFromUserDefaults];
+    [OWSUserProfile resetProfileStorage];
+    [Environment.shared.preferences removeAllValues];
+    [AppEnvironment.shared.notificationPresenter clearAllNotifications];
+    [OWSFileSystem deleteContentsOfDirectory:[OWSFileSystem appSharedDataDirectoryPath]];
+    [OWSFileSystem deleteContentsOfDirectory:[OWSFileSystem appDocumentDirectoryPath]];
+    [OWSFileSystem deleteContentsOfDirectory:[OWSFileSystem cachesDirectoryPath]];
+    [OWSFileSystem deleteContentsOfDirectory:OWSTemporaryDirectory()];
+    [OWSFileSystem deleteContentsOfDirectory:NSTemporaryDirectory()];
+    
+
+    [DebugLogger.sharedLogger wipeLogs];
+//    [self showWelcomeView];
+    exit(0);
+}
+/**
+ * 清除磁盘缓存
+ */
+- (void)clearDBAndOtherFileFinished:(void (^)(void))finished {
+    
+    dispatch_async(dispatch_queue_create("clearup_message", 0), ^{
+        //TODO:  这里还要删除本地的所有会话和个人信息
+        [SSKEnvironment.shared.databaseStorage writeWithBlock:^(SDSAnyWriteTransaction * _Nonnull write) {
+            
+            [TSMessage anyRemoveAllWithInstantationWithTransaction:write];
+                    
+        }];
+        [OWSFileSystem deleteContentsOfDirectory:[OWSFileSystem appDocumentDirectoryPath]];
+        [OWSFileSystem deleteContentsOfDirectory:[OWSFileSystem cachesDirectoryPath]];
+        [OWSFileSystem deleteContentsOfDirectory:OWSTemporaryDirectory()];
+        [OWSFileSystem deleteContentsOfDirectory:NSTemporaryDirectory()];
+        finished();
+    });
+
+}
+
+
+- (void)showHomeView
+{
+    HomeViewController *homeView = [HomeViewController new];
+    SignalsNavigationController *navigationController =
+        [[SignalsNavigationController alloc] initWithRootViewController:homeView];
+    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+//    appDelegate.window.rootViewController = navigationController;
+        appDelegate.window.rootViewController = [BaseTabBarVC new];
+
+    OWSAssertDebug([navigationController.topViewController isKindOfClass:[HomeViewController class]]);
+
+    // Clear the signUpFlowNavigationController.
+    [self setSignUpFlowNavigationController:nil];
+}
+
+
+
++ (void)showWelcomeView{
+    [UIApplication sharedApplication].delegate.window.rootViewController = [[TXLoginManagerController alloc]initialViewController];
+}
+
+@end
+
+NS_ASSUME_NONNULL_END

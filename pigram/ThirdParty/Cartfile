@@ -1,0 +1,17 @@
+github "TheLevelUp/ZXingObjC"
+
+github "SnapKit/SnapKit"
+
+github "SnapKit/Masonry"
+
+github "CoderMJLee/MJRefresh"
+
+github "CoderMJLee/MJExtension"
+
+Github "onevcat/Kingfisher" == 5.8.0
+
+Github "ReactiveX/RxSwift"
+
+Github "scalessec/Toast-Swift"
+
+Github "SVProgressHUD/SVProgressHUD"
